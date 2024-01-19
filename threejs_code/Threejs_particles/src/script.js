@@ -1,0 +1,112 @@
+import './style.css'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import * as dat from 'lil-gui'
+
+/**
+ * Base
+ */
+// Debug
+const gui = new dat.GUI()
+
+// Canvas
+const canvas = document.querySelector('canvas.webgl')
+
+// Scene
+const scene = new THREE.Scene()
+
+/**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader()
+const texture=textureLoader.load("/textures/particles/3.png")
+//Particles
+
+const PointsGeometry=new THREE.BufferGeometry()
+const positions=new Float32Array(5000*3)
+const Color=new Float32Array(5000*3)
+const count=5000
+for(let i=0;i<count*3;i++){
+    Color[i]=(Math.random()-0.5)*3
+    positions[i]=(Math.random()-0.5)*100
+}
+PointsGeometry.setAttribute("position",new THREE.BufferAttribute(positions,3))
+PointsGeometry.setAttribute("color",new THREE.BufferAttribute(Color,3))
+const PointsMaterial=new THREE.PointsMaterial({size:0.8,sizeAttenuation:true,transparent:true,alphaMap:texture})
+PointsMaterial.vertexColors=true
+PointsMaterial.alphaTest=0.001
+PointsMaterial.depthTest=false
+PointsMaterial.depthWrite=false
+const Points=new THREE.Points(PointsGeometry,PointsMaterial)
+scene.add(Points)
+
+/**
+ * Sizes
+ */
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+window.addEventListener('resize', () =>
+{
+    // Update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
+/**
+ * Camera
+ */
+// Base camera
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+camera.position.z = 3
+scene.add(camera)
+
+// Controls
+const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas
+})
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+/**
+ * Animate
+ */
+const clock = new THREE.Clock()
+
+const tick = () =>
+{
+    const elapsedTime = clock.getElapsedTime()
+    Points.position.x=(Math.sin(elapsedTime)-0.5)*10
+    Points.position.z=(Math.cos(elapsedTime)-0.5)*10
+    Points.position.y=(Math.cos(elapsedTime)-0.5)*10
+    
+    Points.rotation.x= (Math.sin(elapsedTime)-0.5)-Math.PI*2
+    Points.rotation.y= (Math.cos(elapsedTime*2)-0.5)-Math.PI*2
+    Points.rotation.z= (Math.cos(elapsedTime)-0.5)-Math.PI*2
+    // Update controls
+    controls.update()
+
+    // Render
+    renderer.render(scene, camera)
+
+    // Call tick again on the next frame
+    window.requestAnimationFrame(tick)
+}
+
+tick()
